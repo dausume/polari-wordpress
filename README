@@ -1,0 +1,74 @@
+### Configuration Changes in .env
+When making any changes to the configuration remember to use the following command before implementing changes...
+Only use this with a development environment!
+
+docker-compose down --volumes
+
+This will remove the old volumes and configurations along with other data stored in volumes so be careful you don't erase
+the databases if it is holding important information.  Then to spin it up with the new configuration use:
+
+docker-compose up -d
+
+### Database Configuration, Testing, and Debugging
+
+## Testing DB Connection between Containers
+Enabling Telnet on Windows:
+
+Open the Control Panel.
+Go to "Programs" > "Turn Windows features on or off."
+Check the box for "Telnet Client."
+Click "OK" to install Telnet.
+Using Third-Party Tools:
+
+For telnet, you can use the Test-NetConnection PowerShell cmdlet or download a third-party telnet client.
+For netcat, you can download a Windows-compatible version like Ncat from the Nmap project.
+
+telnet localhost External_DB_Port
+telnet localhost 3306
+
+## Directly Access mySQL and execute SQL Commands
+
+If you want to manually execute SQL commands inside the MySQL container, you can do so using the docker exec command. Here are the steps:
+
+Get the Container Name or ID:
+First, determine the name or ID of your MySQL container. You can use the following command to list all running containers:
+
+    docker ps
+
+Look for the MySQL container in the list and note its name or ID.
+
+Connect to the MySQL Container:
+Use the docker exec command to start an interactive shell inside the MySQL container:
+
+    docker exec -it <mysql_container_name_or_id> /bin/bash
+
+If that does not work alternatively try:
+
+    docker exec -it <mysql_container_name_or_id> sh
+
+Replace <mysql_container_name_or_id> with the actual name or ID of your MySQL container.
+
+Access MySQL:
+Once inside the container, you can access the MySQL command-line client using the mysql command. You may need to provide the MySQL root password:
+
+    mysql -u root -p
+
+Enter the root password when prompted.
+If this successfully takes you into the SQL terminal, then this confirms the root and general password were set properly
+accoring to your .env file.
+
+Run SQL Commands:
+Now, you're in the MySQL command-line interface. You can run GRANT statements directly, the following command can disable security temporarily so you can check if it is an authentication issue or a general connction issue to help in debugging:
+
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+    FLUSH PRIVILEGES;
+
+After running these commands, you can exit the MySQL client:
+
+    exit;
+
+And exit the container's shell:
+
+    exit
+
+Remember, this manual approach is useful for one-time operations or troubleshooting. If you need to automate the setup of your MySQL container, consider using an initialization script or Docker Compose as mentioned in previous responses.

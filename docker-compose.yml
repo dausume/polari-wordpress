@@ -1,0 +1,58 @@
+version: "3.6"
+services:
+  mysql-wordpress:
+    image: mysql:5.7
+    env_file:
+      - /.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_PASS}
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASS}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - ${MYSQL_PORT_EXTERNAL}:${MYSQL_PORT_CONTAINER}
+    networks:
+      - polariWordpressNetwork
+  wordpress:
+    depends_on: 
+      - mysql-wordpress
+    #In the wordpress image folder we make a docker file to pull the latest wordpress image and add installations
+    #for telnet so we can test connections.
+    build:
+      context: ./wordpress-image
+      dockerfile: Dockerfile
+    #image: wordpress
+    #Wordpress will always by default be exposed on port 80 in the container, so long as the polariWordpressNetwork is not
+    #exposed itself, it will still be secure and only be accessible via the port defined in .env for WORDPRESS_PORT
+    #Once container is running go to url localhost:WORDPRESS_PORT to access it.  For example if in .env file, 
+    #WORDPRESS_PORT = 8000, then go to localhost:8000 to see the wordpress site.
+    ports: 
+      - ${WORDPRESS_PORT}:80
+    environment:
+      - PROJECT_NAME
+      - WORDPRESS_DB_NAME
+      - WORDPRESS_DB_USER
+      - WORDPRESS_DB_PASS
+      - WORDPRESS_DB_HOST=mysql-wordpress
+      - WORDPRESS_DB_PORT=3306
+      - WORDPRESS_THEME_PATH
+      - WORDPRESS_THEME_NAME
+      - WP_DEBUG="true"
+      - PHP_DATE_TIMEZONE="UTC"
+      - DEBUG=ON
+    volumes:
+      - files:/var/www/html/sites/default/files
+      - ./state:/state
+      - ./.bash_history:/home/civicrm/.bash_history
+      - "./${WORDPRESS_THEME_PATH}:/var/www/html/wp-content/themes/${WORDPRESS_THEME_NAME}"
+    restart: always
+    networks:
+      - polariWordpressNetwork
+volumes:
+  files:
+  mysql-data:
+networks:
+  polariWordpressNetwork:
+    driver: bridge
